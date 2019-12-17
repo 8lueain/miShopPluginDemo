@@ -1,0 +1,75 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.xiaomi.shop.build.gradle.plugin'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
+
+
+    defaultConfig {
+        applicationId "com.example.plugina"
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    aaptOptions {
+        File stable_id_file = project.file('stable_id_file.txt')
+        if (stable_id_file.exists()) {
+            additionalParameters "--emit-ids", "${project.file('stable_id_file.txt').absolutePath}"
+        } else {
+            stable_id_file.createNewFile()
+            additionalParameters "--emit-ids", "${project.file('stable_id_file.txt').absolutePath}"
+        }
+    }
+
+}
+
+pluginconfig {
+    libraryName 'baselib'
+    hostPath "${getRootDir()}/app"
+    useHostDependencies true
+    packageId 0x85
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation("com.squareup.okhttp3:okhttp:4.2.1")
+    implementation project(path: ':baselib')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0-beta01'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0-beta01'
+    implementation 'com.google.android.gms:play-services-plus:17.0.0'
+}
+
+autoOutput2Host()
+
+//自动拷贝到host
+def autoOutput2Host() {
+    project.afterEvaluate {
+        project.android.applicationVariants.each { variant ->
+            Task task = project.tasks.findByName("package${variant.name.capitalize()}")
+            if (task) {
+                task.outputs.upToDateWhen { false }
+                task.doLast {
+                    project.copy {
+                        from variant.outputs[0].outputFile
+                        into new File([project.getRootDir(), "app", "src", "main", "assets", "plugins"].join(File.separator))
+                        rename { "plugina.apk" }
+                    }
+                }
+            }
+        }
+    }
+
+}

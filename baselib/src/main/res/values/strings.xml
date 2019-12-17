@@ -1,0 +1,4 @@
+<resources>
+    <string name="string_form_lib">lib_string</string>
+    <string name="title_activity_base_lib">BaseLibActivity</string>
+</resources>
